@@ -70,9 +70,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 #Pip install pymavlink and casadi 
 RUN pip3 install pymavlink casadi
-
 RUN mkdir -p /drone_ws/src 
-WORKDIR /drone_ws/src
 
 #make workspace and directory for source code
 WORKDIR /drone_ws/src
