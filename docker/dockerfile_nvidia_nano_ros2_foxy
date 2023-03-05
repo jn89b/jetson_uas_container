@@ -46,7 +46,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/* \
   && rosdep init || echo "rosdep already initialized"
 
-
+RUN source /opt/ros/foxy/setup.bash 
 # ###########################################
 # #  Full Image
 # ###########################################
@@ -55,8 +55,7 @@ FROM base AS full
 #Pip install pymavlink and casadi 
 RUN pip3 install pymavlink casadi
 
-RUN source /opt/ros/foxy/setup.bash && \
-    cd /home/ && \
+RUN cd /home/ && \
     mkdir -p /drone_ws/src 
 
 WORKDIR /drone_ws/src
