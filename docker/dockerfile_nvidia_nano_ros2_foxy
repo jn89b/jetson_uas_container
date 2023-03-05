@@ -52,19 +52,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # ###########################################
 FROM base AS full
 
-
 #Pip install pymavlink and casadi 
 RUN pip3 install pymavlink casadi
 
-RUN cd /home/ && \
+RUN source /opt/ros/foxy/setup.bash && \
+    cd /home/ && \
     mkdir -p /drone_ws/src 
 
 WORKDIR /drone_ws/src
 
 #make workspace and directory for source code
 WORKDIR /drone_ws/src
-RUN source /opt/ros/foxy/setup.bash && \
-    git clone https://github.com/jn89b/mpc_ros.git && \
+
+RUN git clone https://github.com/jn89b/mpc_ros.git && \
     git clone https://github.com/jn89b/drone_ros.git && \
     cd ../ \
     && colcon build --symlink-install
