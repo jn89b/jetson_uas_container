@@ -46,7 +46,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/* \
   && rosdep init || echo "rosdep already initialized"
 
-RUN source /opt/ros/foxy/setup.bash 
+COPY ./docker/entrypoint.sh /
+ENTRYPOINT [ "/entrypoint.sh" ]
 # ###########################################
 # #  Full Image
 # ###########################################
