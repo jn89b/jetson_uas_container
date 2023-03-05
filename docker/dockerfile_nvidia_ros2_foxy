@@ -59,7 +59,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 
 ###########################################
-#  Full image 
+#  Full Image
 ###########################################
 FROM base AS full
 

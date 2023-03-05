@@ -18,6 +18,9 @@ CORE_DOCKERFILE = ${PWD}/docker/dockerfile_nvidia_ros2_foxy
 BASE_DOCKERFILE = ${PWD}/docker/dockerfile_uas_base
 OVERLAY_DOCKERFILE = ${PWD}/docker/dockerfile_afrl_overlay
 
+CORE_NANO_DOCKERFILE = ${PWD}/docker/dockerfile_nvidia_nano_ros2_foxy
+
+
 # Set Docker volumes and environment variables
 DOCKER_VOLUMES = \
 	--volume="/tmp/.X11-unix:/tmp/.X11-unix:rw"
@@ -47,6 +50,12 @@ build-base: build-core
 # .PHONY: build
 # build: build-base
 # 	@docker build -f ${OVERLAY_DOCKERFILE} -t ${IMAGE_NAME}_overlay .
+
+#Build Nano Image
+.PHONY: build-nano
+build-nano:
+	@docker build -f ${CORE_NANO_DOCKERFILE} -t nvidia_ros2_foxy .
+
 
 # Kill any running Docker containers
 .PHONY: kill
