@@ -86,5 +86,5 @@ RUN source /opt/ros/foxy/setup.bash && \
 
 # # Set up the entrypoint
 WORKDIR /drone_ws/
-COPY ./docker/entrypoint.sh /
+# COPY ./docker/entrypoint.sh /
 # ENTRYPOINT [ "/entrypoint.sh" ]
