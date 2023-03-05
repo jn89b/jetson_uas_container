@@ -1,6 +1,6 @@
 #example to build dockerfile
 FROM dustynv/ros:foxy-ros-base-l4t-r35.2.1 as base
-# SHELL [ "/bin/bash" , "-c" ]
+SHELL [ "/bin/bash" , "-c" ]
 
 # # Install language
 RUN apt-get update && apt-get install -y \
@@ -58,7 +58,6 @@ RUN pip3 install pymavlink casadi
 
 RUN cd /home/ && \
     mkdir -p /drone_ws/src 
-
 
 #make workspace and directory for source code
 WORKDIR /drone_ws/src
