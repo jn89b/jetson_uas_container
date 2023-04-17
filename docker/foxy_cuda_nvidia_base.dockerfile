@@ -60,7 +60,6 @@ ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility,compute
 ENV QT_X11_NO_MITSHM 1
 
 ###########################################
-###########################################
 #  Develop image 
 ###########################################
 FROM base AS dev
@@ -111,15 +110,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 ENV DEBIAN_FRONTEND=
 
+RUN git clone --recursive https://github.com/ArduPilot/ardupilot.git
+
 ###########################################
 # Overlay image
 ###########################################
 FROM full AS overlay
+
 #make workspace and directory for source code
 RUN mkdir -p /ros/catkin_ws/src && \
     cd /ros/catkin_ws/src && \
     git clone https://github.com/jn89b/mpc_ros.git && \
     git clone https://github.com/jn89b/drone_ros.git
+
+WORKDIR /ros/catkin_ws
 
 #source the workspace
 RUN echo "source /ros/catkin_ws/install/setup.bash" >> /home/ros/.bashrc
