@@ -2,18 +2,26 @@
 # Basic entrypoint for ROS / Colcon Docker containers
 
 # Source ROS 2 foxy
-source /opt/ros/foxy/setup.bash
+source ../opt/ros/foxy/setup.bash >> ~/.bashrc
 echo "Sourced ROS 2 foxy"
 
-# Source the base workspace, if built
-if [ -f /drone_ws/install/setup.bash ]
+# # Source the base workspace, if built
+# if [ -f /drone_ws/install/setup.bash ]
+# then
+#   echo "$PWD"
+#   echo "source install/setup.bash" >> ~/.bashrc
+#   source install/setup.bash
+#   echo "Sourced base workspace"
+# fi
+# echo "searching"
+
+# Source the overlay workspace, if built
+if [ -f /develop_ws/install/setup.bash ]
 then
-  echo "$PWD"
-  echo "source install/setup.bash" >> ~/.bashrc
-  source install/setup.bash
-  echo "Sourced base workspace"
+  echo "source /develop_ws/install/setup.bash" >> ~/.bashrc
+  source /develop_ws/install/setup.bash
+  echo "Sourced ROS developer workspace"
 fi
-echo "searching"
 
 # # Source the overlay workspace, if built
 # if [ -f /overlay_ws/install/setup.bash ]
@@ -25,4 +33,4 @@ echo "searching"
 # fi
 
 # Execute the command passed into this entrypoint
-# exec "$@"
+exec "$@"

@@ -16,3 +16,6 @@ DOCKER_ARGS=${DOCKER_VOLUMES}" "${DOCKER_ENV_VARS}
 
 # Run the command
 docker run -it --net=host $DOCKER_ARGS $1 bash -c "$2"
+
+# Execute the command passed into this entrypoint
+exec "$@"

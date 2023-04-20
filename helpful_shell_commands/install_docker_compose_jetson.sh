@@ -1,0 +1,9 @@
+# step 1, install Python PIP
+sudo apt-get update -y
+sudo apt-get upgrade -y
+sudo apt-get install curl python3-pip libffi-dev python-openssl libssl-dev zlib1g-dev gcc g++ make -y
+curl -sSL https://get.docker.com/ | sh
+sudo pip3 install docker-compose
+sudo docker-compose --version
+
+sudo apt-get-install tmux -y

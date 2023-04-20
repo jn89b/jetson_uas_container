@@ -3,7 +3,7 @@
 ###########################################
 FROM nvidia/cuda:12.0.1-runtime-ubuntu20.04 AS base
 
-ENV DEBIAN_FRONTEND=noninteractive
+SHELL [ "/bin/bash" , "-c" ]
 
 # Install language
 RUN apt-get update && apt-get install -y \
@@ -32,16 +32,35 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     software-properties-common \
     wget \
-    && rm -rf /var/lib/apt/lists/*
-
+    && rm -rf /var/lib/apt/lists/* 
 # Install ROS2
-RUN sudo add-apt-repository universe \
+RUN apt-get update \ 
+  && add-apt-repository universe \
   && curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg \
   && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null \
   && apt-get update && apt-get install -y --no-install-recommends \
     ros-foxy-ros-base \
     python3-argcomplete \
-  && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/* 
+
+# # Create Colcon workspace with external dependencies
+# RUN mkdir -p /ros2_ws/src \
+#   osrf-pycommon \
+#   apt-get install python3-vcstool python3-rosinstall-generator python3-osrf-pycommon
+
+# WORKDIR /ros2_ws
+
+# Create Colcon workspace with external dependencies
+# RUN rosinstall_generator --format repos mavlink | tee /tmp/mavlink.repos \
+#     && rosinstall_generator --format repos --upstream mavros | tee -a /tmp/mavros.repos \
+#     && vcs import src < /tmp/mavlink.repos \
+#     && vcs import src < /tmp/mavros.repos \
+#     && apt-get update -y \
+#     && rosdep update \ 
+#     && rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y \
+#     && ./src/mavros/mavros/scripts/install_geographiclib_datasets.sh \
+#     && source /opt/ros/foxy/setup.bash \
+#     && colcon build --symlink-install 
 
 ENV ROS_DISTRO=foxy
 ENV AMENT_PREFIX_PATH=/opt/ros/foxy
@@ -53,16 +72,19 @@ ENV ROS_PYTHON_VERSION=3
 ENV ROS_VERSION=2
 ENV DEBIAN_FRONTEND=
 
-
 # Env vars for the nvidia-container-runtime.
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility,compute
 ENV QT_X11_NO_MITSHM 1
 
+# # Set up the entrypoint executes when you run the container
+# COPY ./docker/entrypoint.sh /
+# ENTRYPOINT [ "/entrypoint.sh" ]
+
 ###########################################
 #  Develop image 
 ###########################################
-FROM base AS dev
+FROM base AS develop
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -75,6 +97,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   python3-argcomplete \
   python3-pip \
   ros-dev-tools \
+  ros-foxy-mavros \ 
   vim \
   && rm -rf /var/lib/apt/lists/* \
   && rosdep init || echo "rosdep already initialized"
@@ -93,7 +116,9 @@ RUN groupadd --gid $USER_GID $USERNAME \
   && chmod 0440 /etc/sudoers.d/$USERNAME \
   # Cleanup
   && rm -rf /var/lib/apt/lists/* \
-  && echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> /home/$USERNAME/.bashrc
+  && echo "if [ -f /opt/ros/${ROS_DISTRO}/setup.bash ]; then source /opt/ros/${ROS_DISTRO}/setup.bash; fi" >> /home/$USERNAME/.bashrc \
+  && wget https://raw.githubusercontent.com/mavlink/mavros/ros2/mavros/scripts/install_geographiclib_datasets.sh \
+  && sh ./install_geographiclib_datasets.sh
 
 ENV DEBIAN_FRONTEND=
 ENV AMENT_CPPCHECK_ALLOW_SLOW_VERSIONS=1
@@ -101,13 +126,17 @@ ENV AMENT_CPPCHECK_ALLOW_SLOW_VERSIONS=1
 ###########################################
 #  Full image 
 ###########################################
-FROM dev AS full
+FROM develop AS full
 
 ENV DEBIAN_FRONTEND=noninteractive
-# Install the full release
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  ros-foxy-ros-base \
+# Install python packages
+RUN pip3 install -U \
+  pexpect \
+  pymavlink \
+  casadi \ 
+  setuptools \
   && rm -rf /var/lib/apt/lists/*
+
 ENV DEBIAN_FRONTEND=
 
 RUN git clone --recursive https://github.com/ArduPilot/ardupilot.git
@@ -117,14 +146,20 @@ RUN git clone --recursive https://github.com/ArduPilot/ardupilot.git
 ###########################################
 FROM full AS overlay
 
-#make workspace and directory for source code
-RUN mkdir -p /ros/catkin_ws/src && \
-    cd /ros/catkin_ws/src && \
-    git clone https://github.com/jn89b/mpc_ros.git && \
-    git clone https://github.com/jn89b/drone_ros.git
+RUN mkdir -p /develop_ws/src \
+  && echo "source /opt/ros/foxy/setup.bash" >> ~/.bashrc
 
-WORKDIR /ros/catkin_ws
+# #make workspace and directory for source code
+# RUN mkdir -p /develop_ws/src && \
+#     cd /develop_ws/src && \
+#     git clone https://github.com/jn89b/mpc_ros.git && \
+#     git clone https://github.com/jn89b/drone_ros.git && \ 
+#     cd ../ \
+#     && colcon build --symlink-install \
+#     && source install/setup.bash 
 
-#source the workspace
-RUN echo "source /ros/catkin_ws/install/setup.bash" >> /home/ros/.bashrc
-WORKDIR /home
+WORKDIR /develop_ws
+
+# # Set up the entrypoint executes when you run the container
+COPY ./docker/entrypoint.sh /
+ENTRYPOINT [ "/entrypoint.sh" ]
